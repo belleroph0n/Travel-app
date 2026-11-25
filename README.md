@@ -1,57 +1,59 @@
 # Trip app
 
-An offline travel app for iPhone that reads from the **!Europe 2026 Trip** Google Sheet.
+An offline travel app for iPhone that reads a trip itinerary from a Google Sheet.
 
-- `index.html`, `app.js`, `styles.css`, `sw.js`, `manifest.webmanifest`, `icons/`, `vendor/` – the app (hosted on GitHub Pages). It holds no trip data.
-- `config.js` – the one line to edit: the Apps Script web app URL.
-- `apps-script/` – the backend that runs inside the Google Sheet. It checks the passcode, reads the sheet and the PDFs in its Drive folder, and hides Alex's surprises until 24 hours before they start.
+- Day-by-day itinerary with a "Today" view: swipe or tap through the dates.
+- Flights, trains, buses, car hire, accommodation and your own plans (restaurants, events), in time order across time zones.
+- Booking refs you can copy, addresses with Map buttons, and a large "Show driver" view for addresses in the local script.
+- Tickets and confirmations (PDFs in the sheet's Drive folder) saved on the phone and readable offline.
+- Cancellation deadlines shown until they've passed.
+- Two passcodes: one traveller sees everything. The other sees items marked **secret** as a "Surprise" card until 24 hours before they start.
+- Updates from the sheet whenever it's opened with internet, and keeps the last copy for offline use.
+- Costs in the sheet are never shown.
 
-## 1. Set up the Apps Script (about 5 minutes)
+**Setting up your own copy?** Follow [REPLICATE.md](REPLICATE.md). It covers the sheet layout, the Google script, hosting and installing on the phones.
 
-1. Open the sheet, then **Extensions → Apps Script**.
-2. Replace everything in `Code.gs` with `apps-script/Code.gs`.
-3. **Project Settings** (gear icon) → tick **Show "appsscript.json" manifest file in editor**. Back in the editor, replace `appsscript.json` with `apps-script/appsscript.json`. (This limits the script to reading this sheet and reading Drive.)
-4. **Project Settings → Script properties → Add script property**:
-   - `DAN_PASSCODE` = your passcode
-   - `ALEX_PASSCODE` = Alex's passcode
+## What's in the repo
 
-   Use something longer than a PIN, such as three or four words.
-5. In the editor, choose `testBuild` in the function menu and click **Run**. Approve the permissions. Google will say the app isn't verified because it's your own script: click **Advanced → Go to … (unsafe)**. The log lists anything in the sheet the app couldn't read.
-6. **Deploy → New deployment** → type **Web app** → Execute as **Me**, Who has access **Anyone** → **Deploy**. Copy the **Web app URL** (it ends in `/exec`).
+| Path | What it is |
+|---|---|
+| `index.html`, `app.js`, `styles.css`, `sw.js`, `manifest.webmanifest`, `icons/`, `vendor/` | The app, hosted on GitHub Pages. It contains no trip data. |
+| `config.js` | The Apps Script web app URL and the trip name shown in the app. |
+| `apps-script/Code.gs`, `apps-script/appsscript.json` | The backend. It runs inside the Google Sheet, checks the passcode, reads the sheet and its folder's PDFs, and hides surprises from the second traveller. |
 
-"Anyone" means the URL answers anyone, but it only returns trip data for a correct passcode. After 10 wrong passcodes it locks for 15 minutes.
+## How privacy works
 
-**If you change `Code.gs` later:** Deploy → Manage deployments → edit (pencil) → Version: **New version** → Deploy. The URL stays the same.
+- The sheet stays private. The Google script reads it as its owner and returns data only for a correct passcode.
+- Passcodes are stored in the script's **Script properties**, never in this repo.
+- Surprises are removed on the server, so the second traveller's phone never receives them early. A surprise appears the next time their app updates after its reveal time.
+- After 10 wrong passcodes, the script refuses all sign-ins for 15 minutes.
+- The web app URL in `config.js` is not a secret on its own, but **each copy of the app must use its own URL**. Pointing a copy at someone else's script can trigger their lockout.
 
-## 2. Publish the app on GitHub Pages
+## Day-to-day use
 
-1. Put the web app URL into `config.js`.
-2. Upload all the files to the repo (Add file → Upload files, drag the folder contents in, Commit).
-3. **Settings → Pages** → Source: **Deploy from a branch** → `main` / `(root)` → Save.
-4. After a minute the app is at `https://belleroph0n.github.io/Travel-app/`.
+- Edit the sheet as normal. The phones pick up changes the next time the app opens with internet. Tap the time at the top to update now.
+- The menu (•••) shows how many documents are saved offline. When the count is complete, the app works without internet.
+- The traveller with the main passcode also gets **Preview Alex's view** (the surprise view) and **Sheet check** (a list of anything in the sheet the app couldn't read).
 
-## 3. Install on each iPhone
+## Making changes
 
-1. Open the Pages URL in **Safari** → Share → **Add to Home Screen**.
-2. Open it **from the home screen icon** (the home screen app has its own storage, separate from Safari) and enter your passcode.
-3. Wait until the menu (•••) shows **Documents 13/13 saved offline**. From then on it works with no internet.
+- **Changed `Code.gs`?** In Apps Script: Deploy → Manage deployments → pencil icon → Version: **New version** → Deploy. The URL stays the same.
+- **Changed any app file?** Bump `VERSION` in `sw.js` (e.g. `trip-v1` → `trip-v2`) so phones load the new version. It can take two opens of the app to appear.
 
-It updates by itself whenever it's opened with internet. Tap the time at the top to update now.
+## Troubleshooting
 
-## Using the sheet
-
-- **Secret** column: `Y` hides the row from Alex until 24 hours before its start (departure time, check-in time, or plan start time, in local time). `N/A` hides the row from everyone (used for the cancelled Air Baltic flight).
-- **Note for Alex (shown while secret)**: what Alex sees on the surprise card, e.g. "Pack an overnight bag".
-- **Local Address**: shown large with a "Show driver" button.
-- **Confirmation / Link / File link**: links to files in the same Drive folder as the sheet are saved on the phones for offline use. Other links are ignored.
-- **Plans** tab: one row per restaurant or event. Date as `d/m/yy`, start time like `19:30`.
-- Costs aren't shown anywhere in the app.
-- Dates are `d/m/yy`. Times in the transport rows are read from patterns like `AKL 1955 > SFO 1105` (add `+1` for next-day arrival).
-
-Alex's surprises are removed on the server, so her phone never has them. A surprise appears on her phone the next time the app updates after its reveal time. If she's offline then, it appears when she's next online.
-
-When you're signed in as Dan, the menu has **Preview Alex's view** and **Sheet check**, which lists anything in the sheet the app couldn't read.
-
-When you change any app file, bump `VERSION` in `sw.js` so phones pick up the new version.
+| Problem | Fix |
+|---|---|
+| Apps Script: "Operation failed. appsscript.json has invalid unsaved changes" | The file contains its path (`apps-script/appsscript.json`) instead of its contents. Open the file in this repo, copy everything inside it, and paste that over the file in Apps Script. Do the same for `Code.gs`. |
+| Apps Script toolbar says "No functions" | `Code.gs` hasn't been pasted correctly. Line 1 should be `/**` and the file is about 550 lines. |
+| "Google hasn't verified this app" | Expected for your own scripts. Click **Advanced** (small grey link, bottom left), then **Go to … (unsafe)**, then **Allow**. It should ask only to view this spreadsheet and to see your Drive files. |
+| App says "That passcode didn't work" | Check the Script property names are exactly `DAN_PASSCODE` and `ALEX_PASSCODE` (see REPLICATE.md), with no extra spaces in the values. |
+| App says "Couldn't reach the server" | The deployment's "Who has access" must be **Anyone**. Also check the URL in `config.js` ends in `/exec`. |
+| App says "The app isn't connected to the sheet yet" | `config.js` still has `PASTE_WEB_APP_URL_HERE`. |
+| "Too many attempts" | Wait 15 minutes. |
+| An item is in the wrong order, or a time is missing | Open **Sheet check** in the menu. It names the row and what it couldn't read. |
+| A document says "Not saved" | It's saved on the next update with internet. Only files in the same Drive folder as the sheet can be saved. |
+| Changes to the app don't show on the phone | Bump `VERSION` in `sw.js`, then close and reopen the app twice. |
+| Installed app shows the sign-in screen again | Safari and the home screen app keep separate storage. Always open it from the home screen icon. |
 
 PDF display uses [PDF.js](https://mozilla.github.io/pdf.js/) (Apache 2.0, see `vendor/PDFJS-LICENSE`).

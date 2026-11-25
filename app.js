@@ -1,4 +1,6 @@
-import { SCRIPT_URL, TRIP_NAME } from './config.js';
+import * as CFG from './config.js';
+const { SCRIPT_URL, TRIP_NAME } = CFG;
+const SURPRISE_NAME = CFG.SURPRISE_NAME || 'Alex';
 
 /* ================================================================== */
 /* Storage (IndexedDB)                                                 */
@@ -292,7 +294,7 @@ function renderMain(keepPosition = false) {
         <button class="pill" id="status"><span class="dot"></span></button>
         <button class="iconbtn" id="menuBtn" aria-label="Menu">${icon('menu')}</button>
       </header>
-      ${S.preview ? `<div class="banner">${icon('eye')} Previewing Alex’s view right now <button id="exitPreview">Exit</button></div>` : ''}
+      ${S.preview ? `<div class="banner">${icon('eye')} Previewing ${esc(SURPRISE_NAME)}’s view right now <button id="exitPreview">Exit</button></div>` : ''}
       <nav class="strip" id="strip">${data.days.map((d, i) => chip(d, i, t)).join('')}</nav>
       <main class="pager" id="pager">${data.days.map((d, i) => dayPanel(data, d, i, t)).join('')}</main>
     </div>`;
@@ -405,8 +407,8 @@ function eventRow(data, e) {
 
 function secretTags(it) {
   if (!it.secret || !it.revealAt) return '';
-  return `<div class="tags"><span class="tag pink">${icon('gift')} Secret · Alex sees it ${esc(fmtInstant(it.revealAt))}</span></div>
-    ${it.alexNote ? `<div class="note alex">Alex sees until then: “${esc(it.alexNote)}”</div>` : ''}`;
+  return `<div class="tags"><span class="tag pink">${icon('gift')} Secret · ${esc(SURPRISE_NAME)} sees it ${esc(fmtInstant(it.revealAt))}</span></div>
+    ${it.alexNote ? `<div class="note alex">${esc(SURPRISE_NAME)} sees until then: “${esc(it.alexNote)}”</div>` : ''}`;
 }
 
 function docButtons(it) {
@@ -555,7 +557,7 @@ function openMenu() {
     <button class="menu-item" data-m="sync">${icon('sync')} Update now <span class="meta">${esc(statusLabel())}</span></button>
     <button class="menu-item" data-m="deadlines">${icon('cal')} Deadlines <span class="meta">${up} coming up</span></button>
     <button class="menu-item" data-m="docs">${icon('doc')} Documents <span class="meta">${S.cached.size}/${data.files.length} saved offline</span></button>
-    ${isDan && !S.preview ? `<button class="menu-item" data-m="preview">${icon('eye')} Preview Alex’s view</button>` : ''}
+    ${isDan && !S.preview ? `<button class="menu-item" data-m="preview">${icon('eye')} Preview ${esc(SURPRISE_NAME)}’s view</button>` : ''}
     ${isDan && S.data.warnings.length ? `<button class="menu-item" data-m="warn">${icon('alert')} Sheet check <span class="meta">${S.data.warnings.length} to look at</span></button>` : ''}
     <button class="menu-item" data-m="signout">${icon('out2')} Sign out of this phone</button>
   `);

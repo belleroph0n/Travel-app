@@ -3,3 +3,6 @@ export const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby_3lRBWPYJdj
 
 // Shown at the top of the app.
 export const TRIP_NAME = 'Europe & Japan';
+
+// The traveller who gets surprises (signs in with ALEX_PASSCODE). Used in labels like "Preview Alex's view".
+export const SURPRISE_NAME = 'Alex';
