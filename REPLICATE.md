@@ -49,7 +49,7 @@ Row 1 headings. The date must be in column A; the other columns are found by the
 | K | `Notes` | Free text | |
 | L | `Confirmation` | Link(s) to ticket files (see "Tickets" below) | |
 | M | `Notes 2` | Free text | |
-| N | `Note for Alex (shown while secret)` | What the second traveller sees on a surprise card | `Pack an overnight bag` |
+| N | `Note for Alex (shown while secret)` | On a secret row: what the second traveller sees on the surprise card. On any other row: an ordinary note both travellers see | `Pack an overnight bag` |
 
 **Route format** for the `Flight` column, so the app can read times:
 

@@ -547,6 +547,8 @@ function buildTrip(src, nowMs, viewer) {
       o[k] = x[k];
     });
     if (viewer === 'alex') o.secret = false;
+    // On items that aren't secret, "Note for Alex" is an ordinary note both travellers see.
+    if (!x.secret && x.alexNote && o.notes && o.notes.indexOf(x.alexNote) < 0) o.notes = o.notes.concat(x.alexNote);
     return o;
   });
 
