@@ -103,6 +103,7 @@ Restaurants, gigs, tours and so on. Row 1 headings:
 | `Address` | include the city or country |
 | `Local Address` | optional |
 | `Booking ref` | |
+| `Tickets` | `Y` if the tickets are in Apple Wallet. Shows an **Open Wallet** button. (Also works as a column in the transport table.) |
 | `Notes` | |
 | `Secret` | `Y` / `N` |
 | `File link` | link to a ticket file |

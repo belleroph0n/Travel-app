@@ -276,7 +276,8 @@ function buildTrip(src, nowMs, viewer) {
     notes: headerIndex_(th, [/^notes$/i], 10),
     link: headerIndex_(th, [/^confirmation$/i], 11),
     notes2: headerIndex_(th, [/^notes 2$/i], 12),
-    alexNote: headerIndex_(th, [/^note for alex/i], 13)
+    alexNote: headerIndex_(th, [/^note for alex/i], 13),
+    wallet: headerIndex_(th, [/^tickets?$/i, /wallet/i], -1)
   };
   var ah = rows[accHdr] || [];
   var A = {
@@ -325,7 +326,8 @@ function buildTrip(src, nowMs, viewer) {
       service: '', from: '', to: '', time: null, arrive: null, arriveDate: null, description: '',
       ref: clean_(cell(r, T.ref).v), carrier: clean_(cell(r, T.carrier).v), baggage: clean_(cell(r, T.baggage).v),
       notes: [clean_(cell(r, T.notes).v), clean_(cell(r, T.notes2).v)].filter(String),
-      alexNote: cell(r, T.alexNote).v.trim(), secret: isSecret_(secretV), files: [], row: r + 1
+      alexNote: cell(r, T.alexNote).v.trim(), secret: isSecret_(secretV), files: [], row: r + 1,
+      wallet: T.wallet >= 0 && isSecret_(cell(r, T.wallet).v)
     };
     if (seg) {
       t.service = info.slice(0, seg.index).replace(/[\s-]+$/, '').trim();
@@ -415,7 +417,8 @@ function buildTrip(src, nowMs, viewer) {
     ref: headerIndex_(ph, [/^booking ref/i], 6), notes: headerIndex_(ph, [/^notes$/i], 7),
     secret: headerIndex_(ph, [/^secret/i], 8), link: headerIndex_(ph, [/^file link$/i], 9),
     alexNote: headerIndex_(ph, [/^note for alex/i], 10),
-    website: headerIndex_(ph, [/^website$/i, /^web$/i, /^url$/i], -1)
+    website: headerIndex_(ph, [/^website$/i, /^web$/i, /^url$/i], -1),
+    wallet: headerIndex_(ph, [/^tickets?$/i, /wallet/i], -1)
   };
   var pc = function (r, c) { return (prow[r] && prow[r][c]) || { v: '', links: [] }; };
   for (r = 1; r < prow.length; r++) {
@@ -429,7 +432,8 @@ function buildTrip(src, nowMs, viewer) {
       type: pc(r, P.type).v.trim(), address: pc(r, P.address).v.trim(), localAddress: pc(r, P.local).v.trim(),
       ref: pc(r, P.ref).v.trim(), notes: [pc(r, P.notes).v.trim()].filter(String),
       alexNote: pc(r, P.alexNote).v.trim(), secret: isSecret_(pc(r, P.secret).v), files: [], row: r + 1,
-      website: P.website >= 0 ? websiteOf_(pc(r, P.website)) : ''
+      website: P.website >= 0 ? websiteOf_(pc(r, P.website)) : '',
+      wallet: P.wallet >= 0 && isSecret_(pc(r, P.wallet).v)
     };
     if (rawTime && (!p.time || (tparts[1] && !p.endTime))) warnings.push('Plans row ' + (r + 1) + ': couldn’t read the time "' + rawTime + '". Use e.g. 1800-2000.');
     p.files = collectFiles(pc(r, P.link), p.id, r + 1);

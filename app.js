@@ -62,6 +62,7 @@ const daysBetween = (a, b) => Math.round((ymd(b) - ymd(a)) / 86400000);
 const rowNo = (id) => parseInt(String(id).replace(/\D/g, ''), 10) || 0;
 
 const ICONS = {
+  wallet: '<rect x="3" y="6" width="18" height="13" rx="2.5"/><path d="M3 10h18M16 14.5h2"/><path d="M6 6V5a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/>',
   globe: '<circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17M12 3.5c2.5 2.7 2.5 14.3 0 17M12 3.5c-2.5 2.7-2.5 14.3 0 17"/>',
   flight: '<path d="M10.5 13.5 3 11l1.5-1.5 8 1 4.5-4.5c.8-.8 2.2-.8 3 0s.8 2.2 0 3L15.5 13.5l1 8L15 23l-2.5-7.5L9 19v2.5L7.5 23 6 18l-5-1.5L2.5 15H5z" transform="scale(.92) translate(1 -1)"/>',
   train: '<rect x="5" y="3" width="14" height="14" rx="3"/><path d="M5 11h14M9 21l-2-3M15 21l2-3"/><circle cx="9" cy="14" r=".6"/><circle cx="15" cy="14" r=".6"/>',
@@ -412,13 +413,17 @@ function secretTags(it) {
     ${it.alexNote ? `<div class="note alex">${esc(SURPRISE_NAME)} sees until then: “${esc(it.alexNote)}”</div>` : ''}`;
 }
 
+function walletButton(it) {
+  return it.wallet ? `<a class="btn pink" data-wallet href="shoebox://">${icon('wallet')} Open Wallet</a>` : '';
+}
+
 function docButtons(it) {
-  if (!it.files || !it.files.length) return '';
+  if (!it.files || !it.files.length) return it.wallet ? `<div class="btnrow">${walletButton(it)}</div>` : '';
   return `<div class="btnrow">${it.files.map(f => {
     const meta = view().files.find(x => x.id === f.id);
     const label = f.label || (meta ? meta.name.replace(/\.[a-z0-9]+$/i, '') : 'Document');
     return `<button class="btn" data-doc="${esc(f.id)}">${icon('doc')} ${esc(f.label ? f.label + '’s ticket' : (it.files.length > 1 ? label : 'Ticket / confirmation'))}</button>`;
-  }).join('')}</div>`;
+  }).join('')}${walletButton(it)}</div>`;
 }
 
 function refChip(ref) {
@@ -454,7 +459,7 @@ function addressBlock(name, address, local) {
     <div class="btnrow">
       ${local ? `<button class="btn pink" data-driver="${esc(local)}" data-driver-en="${esc(address)}">${icon('car2')} Show driver</button>` : ''}
       ${address ? `<button class="btn" data-copy="${esc(address)}">${icon('copy')} Copy</button>` : ''}
-      ${address ? `<a class="btn" href="https://maps.apple.com/?q=${q}" target="_blank" rel="noopener">${icon('map')} Map</a>` : ''}
+      ${address ? `<a class="btn" data-gmap="${esc([name, address].filter(Boolean).join(', '))}" href="https://www.google.com/maps/search/?api=1&query=${q}" target="_blank" rel="noopener">${icon('map')} Map</a>` : ''}
     </div>`;
 }
 
@@ -538,10 +543,25 @@ function onPagerClick(e) {
   const d = e.target.closest('[data-doc]'); if (d) { e.stopPropagation(); return openDoc(d.dataset.doc); }
   const dr = e.target.closest('[data-driver]'); if (dr) { e.stopPropagation(); return openDriver(dr.dataset.driver, dr.dataset.driverEn); }
   const o = e.target.closest('[data-open]'); if (o) { e.stopPropagation(); return openDeadlines(); }
+  const g = e.target.closest('a[data-gmap]');
+  if (g) { e.preventDefault(); return openGoogleMaps(g.dataset.gmap, g.href); }
   const w = e.target.closest('a[data-web]');
   if (w && !navigator.onLine) { e.preventDefault(); return toast('Website needs internet'); }
   if (e.target.closest('a')) return;
   const tgl = e.target.closest('[data-toggle]'); if (tgl) tgl.classList.toggle('open');
+}
+
+// Opens the Google Maps app if it's installed, otherwise Google Maps in the browser.
+function openGoogleMaps(query, webUrl) {
+  let left = false;
+  const onHide = () => { left = true; };
+  document.addEventListener('visibilitychange', onHide, { once: true });
+  window.addEventListener('pagehide', onHide, { once: true });
+  window.location.href = 'comgooglemaps://?q=' + encodeURIComponent(query);
+  setTimeout(() => {
+    document.removeEventListener('visibilitychange', onHide);
+    if (!left && document.visibilityState === 'visible') window.open(webUrl, '_blank');
+  }, 1200);
 }
 
 function openSheet(html) {
