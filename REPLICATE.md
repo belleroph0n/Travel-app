@@ -97,7 +97,7 @@ Restaurants, gigs, tours and so on. Row 1 headings:
 | Heading | Example |
 |---|---|
 | `Date` | `16/12/26` |
-| `Start time` | `19:30` |
+| `Time` | Start and finish, e.g. `1800-2000` (or just `1930` for a start time only) |
 | `Name` | `Dinner at Dishoom` |
 | `Type` | `Restaurant` |
 | `Address` | include the city or country |
@@ -107,6 +107,7 @@ Restaurants, gigs, tours and so on. Row 1 headings:
 | `Secret` | `Y` / `N` |
 | `File link` | link to a ticket file |
 | `Note for Alex (shown while secret)` | `Dress up a bit` |
+| `Website` | optional, e.g. `https://example.com`. Shown as a Website button (needs internet) |
 
 Any other tabs are ignored.
 

@@ -62,6 +62,7 @@ const daysBetween = (a, b) => Math.round((ymd(b) - ymd(a)) / 86400000);
 const rowNo = (id) => parseInt(String(id).replace(/\D/g, ''), 10) || 0;
 
 const ICONS = {
+  globe: '<circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17M12 3.5c2.5 2.7 2.5 14.3 0 17M12 3.5c-2.5 2.7-2.5 14.3 0 17"/>',
   flight: '<path d="M10.5 13.5 3 11l1.5-1.5 8 1 4.5-4.5c.8-.8 2.2-.8 3 0s.8 2.2 0 3L15.5 13.5l1 8L15 23l-2.5-7.5L9 19v2.5L7.5 23 6 18l-5-1.5L2.5 15H5z" transform="scale(.92) translate(1 -1)"/>',
   train: '<rect x="5" y="3" width="14" height="14" rx="3"/><path d="M5 11h14M9 21l-2-3M15 21l2-3"/><circle cx="9" cy="14" r=".6"/><circle cx="15" cy="14" r=".6"/>',
   bus: '<rect x="4" y="3" width="16" height="15" rx="3"/><path d="M4 10h16M7 21v-3M17 21v-3"/><circle cx="8" cy="14" r=".6"/><circle cx="16" cy="14" r=".6"/>',
@@ -387,7 +388,7 @@ function dayPanel(data, d, i, today) {
 
 function timeCol(e) {
   if (!e.time) return '<div class="t"></div>';
-  const lbl = e.type === 'checkin' ? 'from' : e.type === 'checkout' ? 'by' : e.type === 'arrive' ? 'arrive' : '';
+  const lbl = e.type === 'checkin' ? 'from' : e.type === 'checkout' ? 'by' : e.type === 'arrive' ? 'arrive' : e.item && e.item.endTime ? 'to ' + e.item.endTime : '';
   return `<div class="t">${esc(e.time)}${lbl ? `<small>${lbl}</small>` : ''}</div>`;
 }
 
@@ -479,9 +480,11 @@ function stayCard(s, heading, extra = '') {
 function planCard(p) {
   return `<div class="card">
     <div class="title">${icon('star')}<span class="grow">${esc(p.title)}</span>${p.type ? `<span class="tag">${esc(p.type)}</span>` : ''}</div>
+    ${p.time ? `<div class="sub">${esc(p.time)}${p.endTime ? '\u2013' + esc(p.endTime) : ''}</div>` : ''}
     ${p.ref ? `<div class="sub" style="margin-top:6px">Booking ${refChip(p.ref)}</div>` : ''}
     ${addressBlock(p.title, p.address, p.localAddress)}
     ${p.notes.length ? `<div class="note">${p.notes.map(esc).join('\n')}</div>` : ''}
+    ${p.website ? `<div class="btnrow"><a class="btn" data-web href="${esc(p.website)}" target="_blank" rel="noopener">${icon('globe')} Website</a></div>` : ''}
     ${docButtons(p)}
     ${secretTags(p)}
   </div>`;
@@ -535,6 +538,8 @@ function onPagerClick(e) {
   const d = e.target.closest('[data-doc]'); if (d) { e.stopPropagation(); return openDoc(d.dataset.doc); }
   const dr = e.target.closest('[data-driver]'); if (dr) { e.stopPropagation(); return openDriver(dr.dataset.driver, dr.dataset.driverEn); }
   const o = e.target.closest('[data-open]'); if (o) { e.stopPropagation(); return openDeadlines(); }
+  const w = e.target.closest('a[data-web]');
+  if (w && !navigator.onLine) { e.preventDefault(); return toast('Website needs internet'); }
   if (e.target.closest('a')) return;
   const tgl = e.target.closest('[data-toggle]'); if (tgl) tgl.classList.toggle('open');
 }

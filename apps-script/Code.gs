@@ -414,7 +414,8 @@ function buildTrip(src, nowMs, viewer) {
     address: headerIndex_(ph, [/^address$/i], 4), local: headerIndex_(ph, [/^local address$/i], 5),
     ref: headerIndex_(ph, [/^booking ref/i], 6), notes: headerIndex_(ph, [/^notes$/i], 7),
     secret: headerIndex_(ph, [/^secret/i], 8), link: headerIndex_(ph, [/^file link$/i], 9),
-    alexNote: headerIndex_(ph, [/^note for alex/i], 10)
+    alexNote: headerIndex_(ph, [/^note for alex/i], 10),
+    website: headerIndex_(ph, [/^website$/i, /^web$/i, /^url$/i], -1)
   };
   var pc = function (r, c) { return (prow[r] && prow[r][c]) || { v: '', links: [] }; };
   for (r = 1; r < prow.length; r++) {
@@ -422,13 +423,15 @@ function buildTrip(src, nowMs, viewer) {
     var pname = pc(r, P.name).v.trim();
     if (!date || !pname) { if (pname) warnings.push('Plans row ' + (r + 1) + ': date "' + pc(r, P.date).v + '" isn’t d/m/yy.'); continue; }
     var rawTime = pc(r, P.time).v.trim();
+    var tparts = rawTime.split(/\s*(?:-|\u2013|\u2014|\bto\b)\s*/i).filter(String);
     var p = {
-      id: 'p' + (r + 1), kind: 'plan', date: date, time: parseTime(rawTime), title: pname,
+      id: 'p' + (r + 1), kind: 'plan', date: date, time: parseTime(tparts[0]), endTime: tparts[1] ? parseTime(tparts[1]) : null, title: pname,
       type: pc(r, P.type).v.trim(), address: pc(r, P.address).v.trim(), localAddress: pc(r, P.local).v.trim(),
       ref: pc(r, P.ref).v.trim(), notes: [pc(r, P.notes).v.trim()].filter(String),
-      alexNote: pc(r, P.alexNote).v.trim(), secret: isSecret_(pc(r, P.secret).v), files: [], row: r + 1
+      alexNote: pc(r, P.alexNote).v.trim(), secret: isSecret_(pc(r, P.secret).v), files: [], row: r + 1,
+      website: P.website >= 0 ? websiteOf_(pc(r, P.website)) : ''
     };
-    if (rawTime && !p.time) warnings.push('Plans row ' + (r + 1) + ': couldn’t read start time "' + rawTime + '".');
+    if (rawTime && (!p.time || (tparts[1] && !p.endTime))) warnings.push('Plans row ' + (r + 1) + ': couldn’t read the time "' + rawTime + '". Use e.g. 1800-2000.');
     p.files = collectFiles(pc(r, P.link), p.id, r + 1);
     plans.push(p);
   }
@@ -487,13 +490,13 @@ function buildTrip(src, nowMs, viewer) {
   // ---- deadlines
   var deadlines = [];
   stays.forEach(function (s) {
-    if (s.cancellation.freeUntil) deadlines.push({ date: s.cancellation.freeUntil, title: 'Last day to cancel for free', subject: s.name, itemId: s.id });
+    if (s.cancellation.freeUntil) deadlines.push({ date: s.cancellation.freeUntil, title: 'Last day to cancel for free', subject: stayLabel_(s), itemId: s.id });
     s.notes.forEach(function (n) {
       var m = n.match(/(?:until|before|by)\s+(\d{1,2}\/\d{1,2}\/\d{2,4})/i);
       if (m && /cancel/i.test(n)) {
         var dd = parseDMY(m[1]);
         var existing = deadlines.filter(function (x) { return x.itemId === s.id && x.date === dd; })[0];
-        if (existing) existing.title = n; else deadlines.push({ date: dd, title: n, subject: s.name, itemId: s.id });
+        if (existing) existing.title = n; else deadlines.push({ date: dd, title: n, subject: stayLabel_(s), itemId: s.id });
       }
     });
   });
@@ -533,6 +536,7 @@ function buildTrip(src, nowMs, viewer) {
   var outItems = items.map(function (x) {
     if (x.hidden) {
       var ph = { id: x.id, kind: x.kind, date: x.date, time: x.kind === 'stay' ? x.checkIn.time : x.time, startsAt: x.startsAt, surprise: true, note: x.alexNote, revealAt: x.revealAt };
+      if (x.kind === 'plan') ph.endTime = x.endTime;
       if (x.kind === 'stay') { ph.checkIn = x.checkIn; ph.checkOut = x.checkOut; ph.checkOutAt = x.checkOutAt; ph.firstNight = x.firstNight; ph.lastNight = x.lastNight; }
       return ph;
     }
@@ -566,6 +570,15 @@ function buildTrip(src, nowMs, viewer) {
     files: files,
     warnings: viewer === 'dan' ? warnings.filter(function (w, i, a) { return a.indexOf(w) === i; }) : []
   };
+}
+
+function stayLabel_(s) { return s.agent ? s.name + ' (' + s.agent + ')' : s.name; }
+
+function websiteOf_(c) {
+  var url = (c.links[0] && c.links[0].url) || String(c.v || '').trim();
+  if (!url) return '';
+  if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+  return /^https?:\/\/[^\s]+\.[^\s]+$/i.test(url) ? url : '';
 }
 
 function REVEAL_MS_() { return CONFIG.REVEAL_HOURS * 3600 * 1000; }
